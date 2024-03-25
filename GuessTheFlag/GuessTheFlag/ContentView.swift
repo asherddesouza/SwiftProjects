@@ -17,6 +17,22 @@ struct ContentView: View {
     @State private var gameCompleted = false
     @State private var gameRounds = 1
     
+    @State private var rotationAmounts: [Double] = Array(repeating: 0.0, count: 3)
+    @State private var opacityAmounts: [Double] = Array(repeating: 1.0, count: 3)
+    @State private var scaleAmounts: [Double] = Array(repeating: 1.0, count: 3)
+    
+    @State private var flagSelected = 0
+    
+    struct FlagImage: View {
+        var countryFlag: String
+        
+        var body: some View {
+            Image(countryFlag)
+                .clipShape(.rect(cornerRadii:.init(topLeading: 10, bottomLeading:10, bottomTrailing: 10, topTrailing: 10)))
+                .shadow(radius: 5)
+        }
+    }
+    
     
     var body: some View {
         ZStack {
@@ -41,11 +57,21 @@ struct ContentView: View {
                     ForEach(0..<3) { number in
                         Button {
                             flagTapped(number)
+                            if flagSelected == number {
+                                withAnimation(.bouncy(duration: 1)) {
+                                    rotationAmounts[number] += 360
+                                }
+                            } else {
+                                opacityAmounts[number] = 0.25
+                                scaleAmounts[number] = 0.8
+                            }
+                            
                         } label: {
-                            Image(countries[number])
-                                .clipShape(.rect(cornerRadii:.init(topLeading: 10, bottomLeading:10, bottomTrailing: 10, topTrailing: 10)))
-                                .shadow(radius: 5)
+                            FlagImage(countryFlag: countries[number])
                         }
+                        .rotation3DEffect(.degrees(rotationAmounts[number]), axis: (x: 0, y: 1, z: 0))
+                        .opacity(opacityAmounts[number])
+                        .scaleEffect(scaleAmounts[number])
                     }
                     
                     Text("Score: \(userScore)")
@@ -75,6 +101,7 @@ struct ContentView: View {
             userScore += 1
             selectedNumber = number
         } else {
+            selectedNumber = number
             scoreTitle = "Incorrect"
         }
         
@@ -85,11 +112,38 @@ struct ContentView: View {
         } else {
             showingScore = true
         }
+        
+        flagSelected = number
+        
+        for i in 0..<opacityAmounts.count {
+            if i == number {
+                opacityAmounts[i] = 1.0 // set opacity to 1.0 for the tapped button
+            } else {
+                opacityAmounts[i] = 0.25 // set opacity to 0.25 for other buttons
+            }
+        }
+        
+        for i in 0..<scaleAmounts.count {
+            if i == number {
+                scaleAmounts[i] = 1.0 // set opacity to 1.0 for the tapped button
+            } else {
+                scaleAmounts[i] = 0.8 // set opacity to 0.25 for other buttons
+            }
+        }
     }
     
     func askQuestion() {
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
+        
+        for i in 0..<opacityAmounts.count {
+            opacityAmounts[i] = 1.0 // set opacity to 1.0 for the tapped button
+        }
+        
+        for i in 0..<scaleAmounts.count {
+            scaleAmounts[i] = 1.0 // set opacity to 1.0 for the tapped button
+        }
+        
     }
     
     func resetGame() {
